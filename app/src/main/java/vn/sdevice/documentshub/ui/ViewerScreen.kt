@@ -197,13 +197,14 @@ private fun PdfViewer(file: File, onPageCount: (Int) -> Unit) {
     val pageBg = MaterialTheme.colorScheme.surfaceVariant
 
     BoxWithConstraints(Modifier.fillMaxSize().background(pageBg)) {
-        val viewportPx = with(LocalDensity.current) { maxWidth.toPx() }
+        val viewportWidth = maxWidth
+        val viewportPx = with(LocalDensity.current) { viewportWidth.toPx() }
         val renderPx = (viewportPx * zoom).toInt().coerceAtMost(2200)
 
         Box(Modifier.fillMaxSize().horizontalScroll(rememberScrollState())) {
             LazyColumn(
                 state = listState,
-                modifier = Modifier.width(maxWidth * zoom).fillMaxHeight(),
+                modifier = Modifier.width(viewportWidth * zoom).fillMaxHeight(),
                 contentPadding = PaddingValues(vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
