@@ -16,10 +16,28 @@ android {
         versionName = "2.0.0"
     }
 
+    // Khóa ký cố định (CI đọc từ biến môi trường) để SHA-1 không đổi giữa các lần build,
+    // nhờ đó OAuth client của Google luôn khớp.
+    val keystorePath: String? = System.getenv("KEYSTORE_PATH")
+    signingConfigs {
+        if (keystorePath != null) {
+            create("ci") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            if (keystorePath != null) signingConfig = signingConfigs.getByName("ci")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (keystorePath != null) signingConfig = signingConfigs.getByName("ci")
         }
     }
     compileOptions {
