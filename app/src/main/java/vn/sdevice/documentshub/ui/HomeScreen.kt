@@ -239,7 +239,7 @@ fun HomeScreen(vm: MainViewModel) {
                                 }
                             }
                         }
-                        IconButton(onClick = { vm.setGrid(!vm.grid) }) {
+                        IconButton(onClick = { vm.changeGrid(!vm.grid) }) {
                             Icon(if (vm.grid) Icons.Default.ViewList else Icons.Default.GridView, "Đổi kiểu hiển thị")
                         }
                     }

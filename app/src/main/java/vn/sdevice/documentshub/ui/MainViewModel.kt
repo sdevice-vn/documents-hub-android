@@ -141,7 +141,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         dark.value = value
     }
 
-    fun setGrid(value: Boolean) {
+    fun changeGrid(value: Boolean) {
         prefs.edit().putBoolean("grid", value).apply()
         grid = value
     }
