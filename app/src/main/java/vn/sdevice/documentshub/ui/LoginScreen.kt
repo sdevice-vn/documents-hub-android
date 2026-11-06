@@ -38,10 +38,7 @@ fun LoginScreen(vm: MainViewModel) {
         Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 28.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        Box(
-            Modifier.size(52.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary),
-            contentAlignment = Alignment.Center
-        ) { Icon(Icons.Default.Description, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(30.dp)) }
+        AppLogo(52.dp)
 
         Spacer(Modifier.height(24.dp))
         Text("Documents Hub", fontSize = 28.sp, fontWeight = FontWeight.SemiBold)

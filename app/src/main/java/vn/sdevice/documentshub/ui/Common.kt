@@ -2,10 +2,12 @@ package vn.sdevice.documentshub.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Description
@@ -26,12 +28,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.ImageLoader
 import coil.compose.AsyncImage
+import vn.sdevice.documentshub.R
 import vn.sdevice.documentshub.data.DocFile
 import vn.sdevice.documentshub.data.Kind
 import vn.sdevice.documentshub.data.Kinds
@@ -97,5 +106,30 @@ fun rememberSaveCopy(vm: MainViewModel): (DocFile) -> Unit {
     return { f ->
         target = f
         launcher.launch(f.name)
+    }
+}
+
+
+/** Logo của app (giống icon ngoài màn hình chính): ba lớp trắng trên nền chuyển màu xanh dương sang tím. */
+@Composable
+fun AppLogo(size: Dp) {
+    Box(
+        Modifier
+            .size(size)
+            .clip(RoundedCornerShape(size * 0.27f))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(Color(0xFF3B52E8), Color(0xFF7C3AED)),
+                    start = Offset(0f, Float.POSITIVE_INFINITY),
+                    end = Offset(Float.POSITIVE_INFINITY, 0f)
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_logo_layers), null,
+            tint = Color.Unspecified,
+            modifier = Modifier.size(size * 0.8f)
+        )
     }
 }

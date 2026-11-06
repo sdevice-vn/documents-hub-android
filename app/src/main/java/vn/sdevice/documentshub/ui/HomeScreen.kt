@@ -428,10 +428,7 @@ private fun DrawerContent(
 
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.padding(horizontal = 24.dp, vertical = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier.size(32.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) { Icon(Icons.Default.Description, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp)) }
+            AppLogo(32.dp)
             Spacer(Modifier.size(12.dp))
             Text("Documents Hub", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         }
