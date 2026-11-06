@@ -1,10 +1,12 @@
 package vn.sdevice.documentshub.data
 
+import android.accounts.Account
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.RevokeAccessRequest
 import com.google.android.gms.common.api.Scope
 import kotlinx.coroutines.tasks.await
 
@@ -45,5 +47,19 @@ class DriveAuth(context: Context) {
 
     fun forget() {
         lastToken = null
+    }
+
+    /**
+     * Thu hồi quyền drive.file đã cấp cho app. Nhờ vậy lần đăng nhập sau Google hỏi lại và
+     * cho chọn tài khoản, thay vì tự dùng lại tài khoản cũ.
+     */
+    suspend fun revoke(email: String?) {
+        lastToken = null
+        if (email.isNullOrBlank()) return
+        val req = RevokeAccessRequest.builder()
+            .setAccount(Account(email, "com.google"))
+            .setScopes(listOf(Scope("https://www.googleapis.com/auth/drive.file")))
+            .build()
+        Identity.getAuthorizationClient(ctx).revokeAccess(req).await()
     }
 }

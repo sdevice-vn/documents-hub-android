@@ -36,4 +36,5 @@ ui/ViewerScreen.kt   PDF / ảnh / video / âm thanh / văn bản (video, âm th
 ## Giới hạn hiện tại
 - Tải lên chạy khi app còn mở; nếu hệ điều hành đóng app giữa chừng thì phải thêm lại tệp đó.
 - Tệp tối đa 1 GB mỗi lần tải lên.
-- Đăng xuất chỉ xóa dữ liệu tạm trên máy; muốn thu hồi quyền hẳn, vào myaccount.google.com → Bảo mật → Ứng dụng của bên thứ ba.
+- Đăng xuất xóa dữ liệu tạm trên máy và thu hồi quyền Drive của app, nên lần đăng nhập sau Google hỏi lại và cho chọn tài khoản. Tệp trên Drive vẫn còn nguyên.
+- Tệp bạn tự chép hoặc di chuyển vào thư mục "Documents Hub" bằng app Drive hoặc web sẽ không hiện trong app (giới hạn của quyền `drive.file`). Muốn đưa tệp có sẵn trên Drive vào app, bấm "Thêm tệp" rồi chọn Google Drive trong trình chọn tệp của Android; app sẽ tải một bản sao lên thư mục của nó.

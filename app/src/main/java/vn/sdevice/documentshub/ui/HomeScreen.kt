@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.DriveFileMove
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
@@ -100,10 +101,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import vn.sdevice.documentshub.data.DocFile
 import vn.sdevice.documentshub.data.formatDate
+import vn.sdevice.documentshub.data.formatSize
 
 private class Actions(
     val open: (DocFile) -> Unit,
     val notes: (DocFile) -> Unit,
+    val rename: (DocFile) -> Unit,
     val move: (DocFile) -> Unit,
     val saveCopy: (DocFile) -> Unit,
     val external: (DocFile) -> Unit,
@@ -126,6 +129,7 @@ fun HomeScreen(vm: MainViewModel) {
     var showCats by remember { mutableStateOf(false) }
     var pending by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var notesFor by remember { mutableStateOf<DocFile?>(null) }
+    var renameFor by remember { mutableStateOf<DocFile?>(null) }
     var moveFor by remember { mutableStateOf<DocFile?>(null) }
     var deleteFor by remember { mutableStateOf<DocFile?>(null) }
     var confirmEmpty by remember { mutableStateOf(false) }
@@ -150,6 +154,7 @@ fun HomeScreen(vm: MainViewModel) {
         Actions(
             open = { vm.openId = it.id },
             notes = { notesFor = it },
+            rename = { renameFor = it },
             move = { moveFor = it },
             saveCopy = { saveCopy(it) },
             external = { vm.openExternal(it) },
@@ -190,7 +195,9 @@ fun HomeScreen(vm: MainViewModel) {
                             TextField(
                                 value = vm.query,
                                 onValueChange = { vm.query = it },
-                                placeholder = { Text("Tìm theo tên hoặc ghi chú") },
+                                placeholder = {
+                                    Text("Tìm tên hoặc ghi chú", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                },
                                 singleLine = true,
                                 colors = TextFieldDefaults.colors(
                                     focusedContainerColor = Color.Transparent,
@@ -205,7 +212,7 @@ fun HomeScreen(vm: MainViewModel) {
                             Column {
                                 Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(
-                                    "${visible.size} tài liệu",
+                                    "${visible.size} tài liệu · ${formatSize(visible.sumOf { it.size })}",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -239,8 +246,10 @@ fun HomeScreen(vm: MainViewModel) {
                                 }
                             }
                         }
-                        IconButton(onClick = { vm.changeGrid(!vm.grid) }) {
-                            Icon(if (vm.grid) Icons.Default.ViewList else Icons.Default.GridView, "Đổi kiểu hiển thị")
+                        if (!searching) {
+                            IconButton(onClick = { vm.changeGrid(!vm.grid) }) {
+                                Icon(if (vm.grid) Icons.Default.ViewList else Icons.Default.GridView, "Đổi kiểu hiển thị")
+                            }
                         }
                     }
                 )
@@ -345,6 +354,7 @@ fun HomeScreen(vm: MainViewModel) {
             onDismiss = { pending = emptyList() }
         )
     }
+    renameFor?.let { f -> RenameFileDialog(f, onSave = { vm.rename(f, it) }, onDismiss = { renameFor = null }) }
     notesFor?.let { f -> NotesDialog(f, onSave = { vm.saveNotes(f, it) }, onDismiss = { notesFor = null }) }
     moveFor?.let { f ->
         PickCategoryDialog(
@@ -374,7 +384,7 @@ fun HomeScreen(vm: MainViewModel) {
     }
     if (confirmSignOut) {
         ConfirmDialog(
-            text = "Đăng xuất khỏi ${vm.email ?: "tài khoản"}? Bản sao tệp đã tải tạm trên máy sẽ bị xóa. Tệp trên Drive vẫn còn nguyên.",
+            text = "Đăng xuất khỏi ${vm.email ?: "tài khoản"}? Bản sao tệp đã tải tạm trên máy sẽ bị xóa và quyền truy cập Drive của app được thu hồi, lần đăng nhập sau bạn có thể chọn lại tài khoản. Tệp trên Drive vẫn còn nguyên.",
             confirmLabel = "Đăng xuất",
             onConfirm = { vm.signOut() },
             onDismiss = { confirmSignOut = false }
@@ -425,6 +435,18 @@ private fun DrawerContent(
             Spacer(Modifier.size(12.dp))
             Text("Documents Hub", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         }
+
+        val liveSize = live.sumOf { it.size }
+        val trashSize = files.filter { it.isTrash }.sumOf { it.size }
+        Text(
+            buildString {
+                append("Tổng dung lượng: ${formatSize(liveSize)} (${live.size} tài liệu)")
+                if (trashSize > 0) append("\nThùng rác: ${formatSize(trashSize)}")
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 12.dp)
+        )
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 12.dp)) {
             NavigationDrawerItem(
@@ -521,6 +543,8 @@ private fun FileMenu(f: DocFile, a: Actions, inTrash: Boolean) {
             } else {
                 DropdownMenuItem(text = { Text("Mở") }, leadingIcon = { Icon(Icons.Default.OpenInNew, null) },
                     onClick = { open = false; a.open(f) })
+                DropdownMenuItem(text = { Text("Đổi tên") }, leadingIcon = { Icon(Icons.Default.DriveFileRenameOutline, null) },
+                    onClick = { open = false; a.rename(f) })
                 DropdownMenuItem(text = { Text("Ghi chú") }, leadingIcon = { Icon(Icons.Default.Edit, null) },
                     onClick = { open = false; a.notes(f) })
                 DropdownMenuItem(text = { Text("Chuyển phân loại") }, leadingIcon = { Icon(Icons.Default.DriveFileMove, null) },

@@ -241,6 +241,14 @@ class Repository(private val app: Context, private val auth: DriveAuth) {
         api.patch(id, JSONObject().put("trashed", trash))
     }
 
+    suspend fun rename(f: DocFile, name: String) {
+        api.patch(f.id, JSONObject().put("name", name))
+        // Bản sao "mở bằng ứng dụng khác" mang tên cũ nên bỏ đi, lần sau tạo lại với tên mới
+        withContext(Dispatchers.IO) { File(cacheDir(), "out/${f.id}").deleteRecursively() }
+    }
+
+    suspend fun accountRevoke(email: String?) = auth.revoke(email)
+
     suspend fun setNotes(id: String, notes: String) {
         api.patch(id, JSONObject().put("description", notes))
     }

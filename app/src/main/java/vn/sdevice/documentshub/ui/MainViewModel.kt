@@ -191,6 +191,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun signOut() = launchSafe {
+        // Thu hồi quyền để lần đăng nhập sau được chọn lại tài khoản (lỗi mạng thì bỏ qua)
+        runCatching { repo.accountRevoke(email) }
         repo.clearLocal()
         imageLoader.diskCache?.clear()
         imageLoader.memoryCache?.clear()
@@ -290,6 +292,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             say("Đã dọn sạch thùng rác")
         } finally {
             busy = null
+        }
+    }
+
+    fun rename(f: DocFile, raw: String) = launchSafe {
+        val name = sanitizeName(raw)
+        if (name.isEmpty()) return@launchSafe say("Tên tệp không hợp lệ")
+        if (name == f.name) return@launchSafe
+        val before = _files.value
+        _files.value = before.map { if (it.id == f.id) it.copy(name = name) else it }
+        try {
+            repo.rename(f, name)
+            say("Đã đổi tên thành \"$name\"")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            _files.value = before
+            throw e
         }
     }
 

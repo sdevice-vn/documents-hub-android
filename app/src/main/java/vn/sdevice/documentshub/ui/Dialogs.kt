@@ -28,6 +28,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -69,6 +71,30 @@ fun NotesDialog(file: DocFile, onSave: (String) -> Unit, onDismiss: () -> Unit) 
             }
         },
         confirmButton = { Button(onClick = { onSave(text.trim()); onDismiss() }) { Text("Lưu") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Hủy") } }
+    )
+}
+
+@Composable
+fun RenameFileDialog(file: DocFile, onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    // Mặc định bôi đen phần tên, giữ nguyên đuôi tệp (.pdf, .jpg...)
+    val dot = file.name.lastIndexOf('.')
+    val baseEnd = if (dot > 0) dot else file.name.length
+    var value by remember(file.id) { mutableStateOf(TextFieldValue(file.name, TextRange(0, baseEnd))) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Đổi tên tệp") },
+        text = {
+            OutlinedTextField(
+                value = value,
+                onValueChange = { value = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+        },
+        confirmButton = {
+            Button(onClick = { onSave(value.text.trim()); onDismiss() }, enabled = value.text.isNotBlank()) { Text("Lưu") }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Hủy") } }
     )
 }

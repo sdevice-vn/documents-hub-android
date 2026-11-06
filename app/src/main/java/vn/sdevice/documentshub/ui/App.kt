@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -46,7 +47,13 @@ fun DocumentsHubApp(vm: MainViewModel = viewModel()) {
 
     CompositionLocalProvider(LocalDocImageLoader provides vm.imageLoader) {
         DocumentsHubTheme(dark) {
-            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            // Surface đặt màu chữ mặc định theo giao diện, nếu không chữ sẽ đen trên nền tối
+            Surface(
+                Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.onBackground
+            ) {
+              Box(Modifier.fillMaxSize()) {
                 if (!signedIn) {
                     LoginScreen(vm)
                 } else {
@@ -66,6 +73,7 @@ fun DocumentsHubApp(vm: MainViewModel = viewModel()) {
                     }
                 }
                 SnackbarHost(snack, Modifier.align(Alignment.BottomCenter).navigationBarsPadding())
+              }
             }
         }
     }
