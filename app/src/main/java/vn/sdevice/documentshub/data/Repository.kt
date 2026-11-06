@@ -247,8 +247,6 @@ class Repository(private val app: Context, private val auth: DriveAuth) {
         withContext(Dispatchers.IO) { File(cacheDir(), "out/${f.id}").deleteRecursively() }
     }
 
-    suspend fun accountRevoke(email: String?) = auth.revoke(email)
-
     suspend fun setNotes(id: String, notes: String) {
         api.patch(id, JSONObject().put("description", notes))
     }

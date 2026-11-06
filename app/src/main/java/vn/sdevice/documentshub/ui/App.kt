@@ -1,5 +1,6 @@
 package vn.sdevice.documentshub.ui
 
+import android.accounts.AccountManager
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -36,6 +37,17 @@ fun DocumentsHubApp(vm: MainViewModel = viewModel()) {
     // Hộp thoại chọn tài khoản / cấp quyền Drive của Google
     val consentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { res ->
         if (res.resultCode == Activity.RESULT_OK) vm.onConsentResult(res.data) else vm.consentCancelled()
+    }
+    val accountLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        val name = if (res.resultCode == Activity.RESULT_OK) res.data?.getStringExtra(AccountManager.KEY_ACCOUNT_NAME) else null
+        vm.onAccountPicked(name)
+    }
+    val picker = vm.accountPicker
+    LaunchedEffect(picker) {
+        if (picker != null) {
+            accountLauncher.launch(picker)
+            vm.accountPickerLaunched()
+        }
     }
     val consent = vm.consent
     LaunchedEffect(consent) {

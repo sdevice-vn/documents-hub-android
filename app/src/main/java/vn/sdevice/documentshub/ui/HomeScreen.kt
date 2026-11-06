@@ -384,7 +384,7 @@ fun HomeScreen(vm: MainViewModel) {
     }
     if (confirmSignOut) {
         ConfirmDialog(
-            text = "Đăng xuất khỏi ${vm.email ?: "tài khoản"}? Bản sao tệp đã tải tạm trên máy sẽ bị xóa và quyền truy cập Drive của app được thu hồi, lần đăng nhập sau bạn có thể chọn lại tài khoản. Tệp trên Drive vẫn còn nguyên.",
+            text = "Đăng xuất khỏi ${vm.email ?: "tài khoản"}? Bản sao tệp đã tải tạm trên máy sẽ bị xóa. Lần đăng nhập sau bạn được chọn lại tài khoản. Tệp trên Drive vẫn còn nguyên.",
             confirmLabel = "Đăng xuất",
             onConfirm = { vm.signOut() },
             onDismiss = { confirmSignOut = false }

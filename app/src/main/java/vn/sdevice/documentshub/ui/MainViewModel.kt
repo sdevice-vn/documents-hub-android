@@ -1,5 +1,6 @@
 package vn.sdevice.documentshub.ui
 
+import android.accounts.Account
 import android.app.Application
 import android.app.PendingIntent
 import android.content.ActivityNotFoundException
@@ -112,6 +113,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var consent by mutableStateOf<PendingIntent?>(null)
         private set
+    var accountPicker by mutableStateOf<Intent?>(null)
+        private set
     var loading by mutableStateOf(false)
         private set
 
@@ -133,6 +136,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val dark = MutableStateFlow<Boolean?>(if (prefs.contains("dark")) prefs.getBoolean("dark", false) else null)
 
     init {
+        email?.let { auth.account = Account(it, "com.google") }
         if (signedIn.value) refresh()
     }
 
@@ -161,13 +165,28 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     // ---------- Đăng nhập ----------
-    fun signIn() = launchSafe {
-        signingIn = true
-        try {
-            repo.signIn()
-            afterSignIn()
-        } finally {
-            signingIn = false
+    /** Bước 1: mở hộp chọn tài khoản của Google. */
+    fun signIn() { accountPicker = auth.chooseAccountIntent() }
+
+    fun accountPickerLaunched() { accountPicker = null }
+
+    /** Bước 2: đã chọn tài khoản, xin quyền Drive cho đúng tài khoản đó. */
+    fun onAccountPicked(name: String?) {
+        if (name.isNullOrBlank()) {
+            say("Đã hủy đăng nhập")
+            return
+        }
+        auth.account = Account(name, "com.google")
+        email = name
+        prefs.edit().putString("email", name).apply()
+        launchSafe {
+            signingIn = true
+            try {
+                repo.signIn()
+                afterSignIn()
+            } finally {
+                signingIn = false
+            }
         }
     }
 
@@ -191,8 +210,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun signOut() = launchSafe {
-        // Thu hồi quyền để lần đăng nhập sau được chọn lại tài khoản (lỗi mạng thì bỏ qua)
-        runCatching { repo.accountRevoke(email) }
+        auth.account = null
         repo.clearLocal()
         imageLoader.diskCache?.clear()
         imageLoader.memoryCache?.clear()

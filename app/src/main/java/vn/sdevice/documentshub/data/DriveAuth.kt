@@ -6,12 +6,9 @@ import android.content.Context
 import android.content.Intent
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.Identity
-import com.google.android.gms.auth.api.identity.RevokeAccessRequest
+import com.google.android.gms.common.AccountPicker
 import com.google.android.gms.common.api.Scope
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 /** Cần người dùng đồng ý (chọn tài khoản / cấp quyền Drive). Giao diện sẽ mở hộp thoại của Google. */
 class NeedsConsent(val pendingIntent: PendingIntent) : Exception("Cần cấp quyền truy cập Google Drive")
@@ -22,16 +19,28 @@ class NeedsConsent(val pendingIntent: PendingIntent) : Exception("Cần cấp qu
  */
 class DriveAuth(context: Context) {
     private val ctx = context.applicationContext
-    private val request = AuthorizationRequest.builder()
-        .setRequestedScopes(listOf(Scope("https://www.googleapis.com/auth/drive.file")))
-        .build()
+    /** Tài khoản Google người dùng đã chọn; luôn lấy token cho đúng tài khoản này. */
+    @Volatile
+    var account: Account? = null
+
+    private fun request(): AuthorizationRequest {
+        val b = AuthorizationRequest.builder()
+            .setRequestedScopes(listOf(Scope("https://www.googleapis.com/auth/drive.file")))
+        account?.let { b.setAccount(it) }
+        return b.build()
+    }
+
+    /** Hộp chọn tài khoản của Google, luôn hiện danh sách (không tự dùng lại tài khoản cũ). */
+    @Suppress("DEPRECATION")
+    fun chooseAccountIntent(): Intent =
+        AccountPicker.newChooseAccountIntent(null, null, arrayOf("com.google"), true, null, null, null, null)
 
     @Volatile
     var lastToken: String? = null
         private set
 
     suspend fun token(): String {
-        val result = Identity.getAuthorizationClient(ctx).authorize(request).await()
+        val result = Identity.getAuthorizationClient(ctx).authorize(request()).await()
         if (result.hasResolution()) {
             throw NeedsConsent(result.pendingIntent ?: throw IllegalStateException("Thiếu hộp thoại cấp quyền"))
         }
@@ -50,24 +59,5 @@ class DriveAuth(context: Context) {
 
     fun forget() {
         lastToken = null
-    }
-
-    /**
-     * Thu hồi quyền drive.file đã cấp cho app. Nhờ vậy lần đăng nhập sau Google hỏi lại và
-     * cho chọn tài khoản, thay vì tự dùng lại tài khoản cũ.
-     */
-    suspend fun revoke(email: String?) {
-        lastToken = null
-        if (email.isNullOrBlank()) return
-        val req = RevokeAccessRequest.builder()
-            .setAccount(Account(email, "com.google"))
-            .setScopes(listOf(Scope("https://www.googleapis.com/auth/drive.file")))
-            .build()
-        val task = Identity.getAuthorizationClient(ctx).revokeAccess(req)
-        // Không dùng Task.await() ở đây: Kotlin không suy ra được kiểu kết quả của revokeAccess
-        suspendCancellableCoroutine<Unit> { cont ->
-            task.addOnSuccessListener { _ -> if (cont.isActive) cont.resume(Unit) }
-            task.addOnFailureListener { e -> if (cont.isActive) cont.resumeWithException(e) }
-        }
     }
 }
