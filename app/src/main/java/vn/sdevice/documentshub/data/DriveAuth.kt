@@ -8,7 +8,10 @@ import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.RevokeAccessRequest
 import com.google.android.gms.common.api.Scope
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /** Cần người dùng đồng ý (chọn tài khoản / cấp quyền Drive). Giao diện sẽ mở hộp thoại của Google. */
 class NeedsConsent(val pendingIntent: PendingIntent) : Exception("Cần cấp quyền truy cập Google Drive")
@@ -60,6 +63,11 @@ class DriveAuth(context: Context) {
             .setAccount(Account(email, "com.google"))
             .setScopes(listOf(Scope("https://www.googleapis.com/auth/drive.file")))
             .build()
-        Identity.getAuthorizationClient(ctx).revokeAccess(req).await()
+        val task = Identity.getAuthorizationClient(ctx).revokeAccess(req)
+        // Không dùng Task.await() ở đây: Kotlin không suy ra được kiểu kết quả của revokeAccess
+        suspendCancellableCoroutine<Unit> { cont ->
+            task.addOnSuccessListener { _ -> if (cont.isActive) cont.resume(Unit) }
+            task.addOnFailureListener { e -> if (cont.isActive) cont.resumeWithException(e) }
+        }
     }
 }
