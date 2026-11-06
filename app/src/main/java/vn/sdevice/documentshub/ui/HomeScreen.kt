@@ -135,7 +135,7 @@ fun HomeScreen(vm: MainViewModel) {
     var confirmEmpty by remember { mutableStateOf(false) }
     var confirmSignOut by remember { mutableStateOf(false) }
 
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+    val picker = rememberLauncherForActivityResult(remember { OpenDocumentsWithWrite() }) { uris ->
         if (uris.isNotEmpty()) pending = uris
     }
 
@@ -350,7 +350,8 @@ fun HomeScreen(vm: MainViewModel) {
             categories = cats,
             initial = preferred,
             confirmLabel = "Tải lên",
-            onConfirm = { vm.addFiles(pending, it) },
+            deleteLabel = "Xóa tệp gốc trong điện thoại sau khi tải lên",
+            onConfirm = { c, del -> vm.addFiles(pending, c, del) },
             onDismiss = { pending = emptyList() }
         )
     }
@@ -362,7 +363,7 @@ fun HomeScreen(vm: MainViewModel) {
             categories = cats,
             initial = f.category,
             confirmLabel = "Chuyển",
-            onConfirm = { vm.move(f, it) },
+            onConfirm = { c, _ -> vm.move(f, c) },
             onDismiss = { moveFor = null }
         )
     }

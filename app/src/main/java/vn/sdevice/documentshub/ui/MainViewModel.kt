@@ -254,14 +254,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
 
     // ---------- Tệp ----------
-    fun addFiles(uris: List<Uri>, category: String) = launchSafe {
+    fun addFiles(uris: List<Uri>, category: String, deleteOriginals: Boolean = false) = launchSafe {
         var ok = 0
         var failed = 0
         var lastError = ""
+        val uploaded = mutableListOf<Uri>()
         uris.forEachIndexed { i, uri ->
             upload = UploadState(repo.displayName(uri), i + 1, uris.size, 0f)
             try {
                 repo.upload(uri, category) { p -> upload = upload?.copy(progress = p) }
+                uploaded += uri
                 ok++
             } catch (e: CancellationException) {
                 throw e
@@ -275,8 +277,25 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         upload = null
         if (ok > 0) runCatching { reload() }
-        if (ok > 0 && failed == 0) say(if (ok == 1) "Đã thêm 1 tệp" else "Đã thêm $ok tệp")
-        else if (failed > 0) say("Không thêm được $failed tệp: $lastError")
+
+        // Chỉ xóa tệp gốc của những tệp đã tải lên thành công
+        var deleted = 0
+        var kept = 0
+        if (deleteOriginals) {
+            uploaded.forEach { if (repo.deleteOriginal(it)) deleted++ else kept++ }
+        }
+
+        val parts = mutableListOf<String>()
+        if (ok > 0 && failed == 0) parts += if (ok == 1) "Đã thêm 1 tệp" else "Đã thêm $ok tệp"
+        else if (failed > 0) parts += "Không thêm được $failed tệp: $lastError"
+        if (deleteOriginals && ok > 0) {
+            parts += when {
+                kept == 0 -> "đã xóa $deleted tệp gốc trong điện thoại"
+                deleted == 0 -> "không xóa được tệp gốc (nguồn không cho phép), tệp gốc vẫn còn"
+                else -> "đã xóa $deleted tệp gốc, không xóa được $kept tệp"
+            }
+        }
+        if (parts.isNotEmpty()) say(parts.joinToString(". "))
     }
 
     fun trash(f: DocFile) = mutate(

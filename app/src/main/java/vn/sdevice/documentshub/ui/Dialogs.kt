@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -105,27 +106,49 @@ fun PickCategoryDialog(
     categories: List<String>,
     initial: String?,
     confirmLabel: String,
-    onConfirm: (String) -> Unit,
+    deleteLabel: String? = null,
+    onConfirm: (category: String, deleteOriginals: Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     var selected by remember { mutableStateOf(initial?.takeIf { it in categories } ?: categories.first()) }
+    var deleteOriginals by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column(Modifier.heightIn(max = 320.dp).verticalScroll(rememberScrollState())) {
-                categories.forEach { c ->
+            Column {
+                Column(Modifier.heightIn(max = 280.dp).verticalScroll(rememberScrollState())) {
+                    categories.forEach { c ->
+                        Row(
+                            Modifier.fillMaxWidth().clickable { selected = c },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(selected = selected == c, onClick = { selected = c })
+                            Text(c, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                    }
+                }
+                if (deleteLabel != null) {
+                    HorizontalDivider(Modifier.padding(vertical = 8.dp))
                     Row(
-                        Modifier.fillMaxWidth().clickable { selected = c },
+                        Modifier.fillMaxWidth().clickable { deleteOriginals = !deleteOriginals },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        RadioButton(selected = selected == c, onClick = { selected = c })
-                        Text(c, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Checkbox(checked = deleteOriginals, onCheckedChange = { deleteOriginals = it })
+                        Text(deleteLabel)
+                    }
+                    if (deleteOriginals) {
+                        Text(
+                            "Tệp gốc bị xóa vĩnh viễn khỏi điện thoại, không vào thùng rác. Tệp nào tải lên lỗi hoặc nguồn không cho xóa sẽ được giữ lại.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(start = 12.dp, top = 4.dp)
+                        )
                     }
                 }
             }
         },
-        confirmButton = { Button(onClick = { onConfirm(selected); onDismiss() }) { Text(confirmLabel) } },
+        confirmButton = { Button(onClick = { onConfirm(selected, deleteOriginals); onDismiss() }) { Text(confirmLabel) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Hủy") } }
     )
 }

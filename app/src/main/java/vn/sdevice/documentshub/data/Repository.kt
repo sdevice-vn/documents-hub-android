@@ -131,6 +131,15 @@ class Repository(private val app: Context, private val auth: DriveAuth) {
 
     private fun cacheDir() = File(app.cacheDir, "docs").apply { mkdirs() }
 
+    /** Xóa tệp gốc trong điện thoại qua trình cung cấp tài liệu. Trả về false nếu nguồn không cho xóa. */
+    suspend fun deleteOriginal(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        try {
+            android.provider.DocumentsContract.deleteDocument(app.contentResolver, uri)
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     suspend fun upload(uri: Uri, category: String, onProgress: (Float) -> Unit) {
         val name = displayName(uri)
         val declared = sizeOf(uri)

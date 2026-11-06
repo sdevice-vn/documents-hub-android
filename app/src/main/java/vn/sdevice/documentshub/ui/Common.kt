@@ -110,6 +110,12 @@ fun rememberSaveCopy(vm: MainViewModel): (DocFile) -> Unit {
 }
 
 
+/** Trình chọn tệp có xin thêm quyền ghi, để sau khi tải lên có thể xóa tệp gốc nếu người dùng chọn. */
+class OpenDocumentsWithWrite : ActivityResultContracts.OpenMultipleDocuments() {
+    override fun createIntent(context: android.content.Context, input: Array<String>): android.content.Intent =
+        super.createIntent(context, input).addFlags(android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+}
+
 /** Logo của app (giống icon ngoài màn hình chính): ba lớp trắng trên nền chuyển màu xanh dương sang tím. */
 @Composable
 fun AppLogo(size: Dp) {
