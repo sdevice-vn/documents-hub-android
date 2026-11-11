@@ -18,6 +18,7 @@ import coil.decode.SvgDecoder
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -254,28 +255,52 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
 
     // ---------- Tệp ----------
+    /** Tải lên, tự thử lại tối đa 3 lần nếu mạng chập chờn (không thử lại khi Drive từ chối). */
+    private suspend fun uploadWithRetry(uri: Uri, category: String) {
+        var attempt = 0
+        while (true) {
+            try {
+                repo.upload(uri, category) { p -> upload = upload?.copy(progress = p) }
+                return
+            } catch (e: IOException) {
+                attempt++
+                if (attempt >= 3) throw e
+                upload = upload?.copy(progress = 0f)
+                delay(2000L * attempt)
+            }
+        }
+    }
+
     fun addFiles(uris: List<Uri>, category: String, deleteOriginals: Boolean = false) = launchSafe {
         var ok = 0
         var failed = 0
         var lastError = ""
         val uploaded = mutableListOf<Uri>()
-        uris.forEachIndexed { i, uri ->
-            upload = UploadState(repo.displayName(uri), i + 1, uris.size, 0f)
-            try {
-                repo.upload(uri, category) { p -> upload = upload?.copy(progress = p) }
-                uploaded += uri
-                ok++
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: NeedsConsent) {
-                upload = null
-                throw e
-            } catch (e: Throwable) {
-                failed++
-                lastError = friendly(e)
+        val ctx = getApplication<Application>()
+        try {
+            uris.forEachIndexed { i, uri ->
+                val name = repo.displayName(uri)
+                upload = UploadState(name, i + 1, uris.size, 0f)
+                // Giữ app sống khi bạn chuyển sang app khác, nếu không Android sẽ cắt mạng giữa chừng
+                UploadService.start(ctx, "Đang tải lên ${i + 1}/${uris.size}: $name")
+                try {
+                    uploadWithRetry(uri, category)
+                    uploaded += uri
+                    ok++
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: NeedsConsent) {
+                    upload = null
+                    throw e
+                } catch (e: Throwable) {
+                    failed++
+                    lastError = friendly(e)
+                }
             }
+        } finally {
+            upload = null
+            UploadService.stop(ctx)
         }
-        upload = null
         if (ok > 0) runCatching { reload() }
 
         // Chỉ xóa tệp gốc của những tệp đã tải lên thành công

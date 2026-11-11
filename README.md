@@ -37,5 +37,6 @@ ui/ViewerScreen.kt   PDF / ảnh / video / âm thanh / văn bản (video, âm th
 - Tải lên chạy khi app còn mở; nếu hệ điều hành đóng app giữa chừng thì phải thêm lại tệp đó.
 - Tệp tối đa 1 GB mỗi lần tải lên.
 - Đăng xuất xóa dữ liệu tạm trên máy; mỗi lần đăng nhập app mở hộp chọn tài khoản Google để bạn chọn lại. Muốn thu hồi quyền hẳn, vào myaccount.google.com → Bảo mật → Ứng dụng của bên thứ ba. Tệp trên Drive vẫn còn nguyên.
+- Khi đang tải tệp lên, app chạy dịch vụ nền kèm thông báo "Đang tải lên…" để Android không cắt mạng khi bạn chuyển sang app khác. Mạng chập chờn thì app tự thử lại tối đa 3 lần cho mỗi tệp. Nếu bạn vuốt đóng app khỏi danh sách ứng dụng gần đây thì việc tải lên vẫn bị dừng.
 - Khi thêm tệp, có thể tick "Xóa tệp gốc trong điện thoại sau khi tải lên". Chỉ tệp đã tải lên thành công mới bị xóa (vĩnh viễn, không vào thùng rác); nguồn nào không cho xóa thì tệp gốc được giữ lại và app báo cho bạn.
 - Tệp bạn tự chép hoặc di chuyển vào thư mục "Documents Hub" bằng app Drive hoặc web sẽ không hiện trong app (giới hạn của quyền `drive.file`). Muốn đưa tệp có sẵn trên Drive vào app, bấm "Thêm tệp" rồi chọn Google Drive trong trình chọn tệp của Android; app sẽ tải một bản sao lên thư mục của nó.
