@@ -430,6 +430,33 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Chia sẻ tệp qua bảng chia sẻ của Android (Zalo, Gmail, Bluetooth...), gửi kèm chính tệp chứ không chỉ liên kết. */
+    fun share(f: DocFile) = launchSafe {
+        busy = "Đang chuẩn bị tệp…"
+        try {
+            val app = getApplication<Application>()
+            val copy = repo.exportCopy(f)
+            val uri = FileProvider.getUriForFile(app, "${app.packageName}.fileprovider", copy)
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = Kinds.mimeOf(f.name)
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, f.name)
+                clipData = android.content.ClipData.newRawUri(f.name, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            val chooser = Intent.createChooser(send, "Chia sẻ \"${f.name}\"").apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            try {
+                app.startActivity(chooser)
+            } catch (e: ActivityNotFoundException) {
+                say("Không có ứng dụng nào để chia sẻ tệp này")
+            }
+        } finally {
+            busy = null
+        }
+    }
+
     // ---------- Phân loại ----------
     fun addCategory(raw: String) = launchSafe {
         val name = sanitizeName(raw)

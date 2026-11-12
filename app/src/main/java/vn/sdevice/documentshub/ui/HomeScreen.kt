@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.RestoreFromTrash
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
@@ -110,6 +111,7 @@ private class Actions(
     val move: (DocFile) -> Unit,
     val saveCopy: (DocFile) -> Unit,
     val external: (DocFile) -> Unit,
+    val share: (DocFile) -> Unit,
     val trash: (DocFile) -> Unit,
     val restore: (DocFile) -> Unit,
     val deleteForever: (DocFile) -> Unit
@@ -158,6 +160,7 @@ fun HomeScreen(vm: MainViewModel) {
             move = { moveFor = it },
             saveCopy = { saveCopy(it) },
             external = { vm.openExternal(it) },
+            share = { vm.share(it) },
             trash = { vm.trash(it) },
             restore = { vm.restore(it) },
             deleteForever = { deleteFor = it }
@@ -541,6 +544,8 @@ private fun FileMenu(f: DocFile, a: Actions, inTrash: Boolean) {
             } else {
                 DropdownMenuItem(text = { Text("Mở") }, leadingIcon = { Icon(Icons.Default.OpenInNew, null) },
                     onClick = { open = false; a.open(f) })
+                DropdownMenuItem(text = { Text("Chia sẻ") }, leadingIcon = { Icon(Icons.Default.Share, null) },
+                    onClick = { open = false; a.share(f) })
                 DropdownMenuItem(text = { Text("Đổi tên") }, leadingIcon = { Icon(Icons.Default.DriveFileRenameOutline, null) },
                     onClick = { open = false; a.rename(f) })
                 DropdownMenuItem(text = { Text("Ghi chú") }, leadingIcon = { Icon(Icons.Default.Edit, null) },
